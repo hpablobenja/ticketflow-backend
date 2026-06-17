@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: ticketflow_postgres
+    environment:
+      POSTGRES_USER: ticket_user
+      POSTGRES_PASSWORD: ticket_password
+      POSTGRES_DB: ticketflow_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ticketflow_network
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: ticketflow_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ticketflow_network
+
+  auth-service:
+    build: ./auth-service
+    container_name: ticketflow_auth
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://ticket_user:ticket_password@postgres-db:5432/ticketflow_db
+    depends_on:
+      - postgres-db
+    networks:
+      - ticketflow_network
+
+  booking-service:
+    build: ./booking-service
+    container_name: ticketflow_booking
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://ticket_user:ticket_password@postgres-db:5432/ticketflow_db
+      - REDIS_URL=redis://redis-cache:6379
+    depends_on:
+      - postgres-db
+      - redis-cache
+    networks:
+      - ticketflow_network
+
+  notification-service:
+    build: ./notification-service
+    container_name: ticketflow_notifications
+    environment:
+      - REDIS_URL=redis://redis-cache:6379
+    depends_on:
+      - redis-cache
+    networks:
+      - ticketflow_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  ticketflow_network:
+    driver: bridge

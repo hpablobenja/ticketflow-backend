@@ -1,0 +1,60 @@
+name: Continuous Integration - TicketFlow
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  auth-service-quality:
+    runs-on: ubuntu-latest
+    
+    services:
+      # Levantamos un contenedor temporal de Postgres para soportar las pruebas de integración
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: ticket_user
+          POSTGRES_PASSWORD: ticket_password
+          POSTGRES_DB: ticketflow_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ticket_user -d ticketflow_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        cd auth-service
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run Ruff Linter & Formatter Check
+      run: |
+        cd auth-service
+        ruff check .
+        ruff format --check .
+
+    - name: Run Static Type Checking (Mypy)
+      run: |
+        cd auth-service
+        mypy app/
+
+    - name: Run Automated Tests (Pytest)
+      env:
+        DATABASE_URL: postgresql+asyncpg://ticket_user:ticket_password@localhost:5432/ticketflow_db
+      run: |
+        cd auth-service
+        pytest

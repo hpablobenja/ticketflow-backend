@@ -1,0 +1,35 @@
+# Archivos de bytecode y caché
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Archivos de configuración locales
+*.env
+*.local
+*.log
+
+# Directorios de pruebas y cobertura
+.coverage
+htmlcov/
+.tox/
+nosetests.xml
+coverage.xml
+
+# Archivos de compilación
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/
+
+# IDEs y editores
+.vscode/
+.idea/
+*.swp
