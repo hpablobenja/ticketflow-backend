@@ -1,8 +1,3 @@
-¡Claro que sí! Un excelente proyecto de microservicios con FastAPI, PostgreSQL, Redis, Docker y procesamiento asíncrono se merece un **README.md** profesional de nivel *Senior*. Este archivo está estructurado para que cualquier reclutador o desarrollador entienda de inmediato tu dominio de la arquitectura de software.
-
-Aquí tienes el contenido completo listo para copiar y pegar en el archivo `README.md` en la raíz de tu proyecto:
-
-```markdown
 # TicketFlow 🎫 - Plataforma Distribuida de Compra de Entradas
 
 TicketFlow es una solución de backend diseñada bajo una **arquitectura orientada a microservicios** de alta disponibilidad para mitigar los problemas clásicos de alta concurrencia, reventa masiva (bots) y consistencia de datos durante la venta de entradas para eventos masivos.
