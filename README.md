@@ -117,10 +117,3 @@ docker exec -it postgres-db psql -U ticket_user -d ticketflow_db -c "INSERT INTO
 * **Seguridad Criptográfica:** Migración del ecosistema hacia librerías de `bcrypt` nativas compiladas en C en entornos Linux/Docker, evitando errores de tipado en payloads de strings/bytes.
 * **Manejo de Errores Semántico:** Respuestas claras basadas en los estándares de FastAPI y validaciones nativas en Query Params con Pydantic.
 * **Arquitectura de Alta Disponibilidad:** Separación estricta de responsabilidades donde las tareas de E/S intensivas (I/O Bound) se delegan a workers asíncronos para mantener una API con latencias mínimas.
-
-```
-
-### 💡 Consejo para tu portafolio:
-Cuando subas tu proyecto a GitHub, asegúrate de incluir este archivo como `README.md` en la raíz. Si presentas este proyecto en una entrevista técnica, este documento guiará al entrevistador directamente a los puntos fuertes de tu código: **concurrencia, asincronía, enums nativos de base de datos y rate-limiting**. ¡Mucho éxito en tus pruebas!
-
-```
