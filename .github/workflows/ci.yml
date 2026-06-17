@@ -3,9 +3,9 @@ name: TicketFlow CI Pipeline 🎫
 # El pipeline se ejecutará automáticamente ante cualquier Push o Pull Request a la rama main
 on:
   push:
-    branches: [ main, master ]
+    branches: - '**'
   pull_request:
-    branches: [ main, master ]
+    branches: - '**'
 
 jobs:
   code-quality:
