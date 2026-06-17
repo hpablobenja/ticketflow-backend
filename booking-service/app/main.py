@@ -16,6 +16,9 @@ from app.schemas import EventCreate, EventResponse, ReservationResponse
 import json
 from fastapi import status
 
+import time
+from fastapi import Request
+
 app = FastAPI(title=settings.PROJECT_NAME, version="1.0.0")
 
 @app.on_event("startup")
@@ -32,6 +35,25 @@ async def get_db_session():
 
 # Middleware para Rate Limiting Avanzado por IP usando Redis
 @app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    # 1. Registramos el tiempo exacto antes de que empiece la petición
+    start_time = time.perf_counter()
+    
+    # 2. Procesamos la petición (va al endpoint, base de datos, Redis, etc.)
+    response = call_next(request)
+    
+    # Si la respuesta es una corrutina (como en endpoints asíncronos), esperamos su resolución
+    if hasattr(response, "__await__"):
+        response = await response
+        
+    # 3. Calculamos la diferencia de tiempo
+    process_time = time.perf_counter() - start_time
+    
+    # 4. Inyectamos la latencia en milisegundos en los headers de respuesta para análisis
+    response.headers["X-Process-Time-Ms"] = f"{process_time * 1000:.2f}"
+    
+    return response
+
 async def rate_limiter_middleware(request: Request, call_next):
     client_ip = request.client.host if request.client else "unknown"
     redis: aioredis.Redis = await get_redis()
