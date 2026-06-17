@@ -58,7 +58,7 @@ async def main():
             if message:
                 data = message.get("data")
                 if data:
-                    # Ejecutar la tarea pesada sin bloquear el bucle de escucha del pubsub
+                    # Ejecutar la tarea pesada sin bloquear el bucle de escucha del pub-sub
                     asyncio.create_task(process_notification(data))
             await asyncio.sleep(0.1)
     except asyncio.CancelledError:
