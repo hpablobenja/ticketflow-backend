@@ -2,10 +2,12 @@ from sqlalchemy import Column, Integer, String, Enum
 import enum
 from app.database import Base
 
+
 class UserRole(str, enum.Enum):
     ADMIN = "Admin"
     ORGANIZER = "Organizer"
     CUSTOMER = "Customer"
+
 
 class User(Base):
     __tablename__ = "users"

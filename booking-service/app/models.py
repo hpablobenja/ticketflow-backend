@@ -4,6 +4,7 @@ from datetime import datetime
 
 Base = declarative_base()
 
+
 class Event(Base):
     __tablename__ = "events"
 
@@ -12,8 +13,9 @@ class Event(Base):
     date = Column(DateTime, nullable=False)
     total_tickets = Column(Integer, nullable=False)
     tickets_left = Column(Integer, nullable=False)
-    
+
     tickets = relationship("Ticket", back_populates="event")
+
 
 class Ticket(Base):
     __tablename__ = "tickets"

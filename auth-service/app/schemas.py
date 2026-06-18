@@ -1,10 +1,12 @@
 from pydantic import BaseModel, EmailStr
 from app.models import UserRole
 
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
     role: UserRole = UserRole.CUSTOMER
+
 
 class UserResponse(BaseModel):
     id: int
@@ -13,6 +15,7 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class Token(BaseModel):
     access_token: str
