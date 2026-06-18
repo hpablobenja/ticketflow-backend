@@ -65,8 +65,8 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f auth-service/requirements.txt ]; then pip install -r auth-service/requirements.txt; fi
         if [ -f booking-service/requirements.txt ]; then pip install -r booking-service/requirements.txt; fi
-        pip install pytest httpx pytest-asyncio
-
+        pip install pytest httpx pytest-asyncio aiosqlite
+        
     - name: 🏃‍♂️ Ejecutar Suite de Tests con Pytest
       env:
         DATABASE_URL: "sqlite+aiosqlite:///:memory:"
