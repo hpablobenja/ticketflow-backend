@@ -71,5 +71,6 @@ jobs:
       env:
         DATABASE_URL: "sqlite+aiosqlite:///:memory:"
         REDIS_HOST: localhost
+        PYTHONPATH: ".:auth-service:booking-service:notification-service"
       run: |
         pytest
