@@ -14,8 +14,18 @@ class EventBase(BaseModel):
     )
 
 
-class EventCreate(EventBase):
-    pass
+# Esquema simple para crear eventos desde Postman con payload reducido
+class SimpleEventCreate(BaseModel):
+    id: Optional[int] = None
+    title: str = Field(..., min_length=1, max_length=200, example="Pequeño TicketFlow 2026")
+    tickets_left: int = Field(..., ge=0, example=100)
+
+
+class EventUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=1, max_length=200)
+    date: Optional[datetime] = None
+    total_tickets: Optional[int] = Field(None, gt=0)
+    tickets_left: Optional[int] = Field(None, ge=0)
 
 
 class EventResponse(BaseModel):
@@ -39,6 +49,10 @@ class TicketResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class TicketUpdate(BaseModel):
+    status: Optional[str] = Field(None, description="Estado del ticket: reserved, confirmed, cancelled")
 
 
 class ReservationRequest(BaseModel):

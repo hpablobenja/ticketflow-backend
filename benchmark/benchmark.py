@@ -43,7 +43,7 @@ async def main():
 
         total_test_time = time.perf_counter() - start_test
 
-    # --- PROCESAMIENTO ANALÍTICO DE RESULTADOS ---
+    # PROCESAMIENTO ANALÍTICO DE RESULTADOS
     success_count = 0
     rate_limited_count = 0
     errors_count = 0

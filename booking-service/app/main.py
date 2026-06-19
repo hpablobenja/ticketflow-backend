@@ -11,13 +11,21 @@ from app.config import settings
 from app.database import engine, get_db
 from app.models import Base, Event, Ticket
 from app.redis_client import get_redis
-from app.schemas import EventCreate, EventResponse, ReservationResponse
+from app.schemas import (
+    EventResponse,
+    EventUpdate,
+    ReservationResponse,
+    SimpleEventCreate,
+    TicketResponse,
+    TicketUpdate,
+)
 
 import json
 from fastapi import status
 
 import time
 from fastapi import Request
+from datetime import datetime
 
 app = FastAPI(title=settings.PROJECT_NAME, version="1.0.0")
 
@@ -190,3 +198,166 @@ async def checkout_ticket(ticket_id: int, db: AsyncSession = Depends(get_db)):
         "message": "Pago procesado exitosamente. Su entrada está en camino.",
         "ticket_id": ticket.id,
     }
+
+@app.post("/api/v1/events", status_code=status.HTTP_201_CREATED, response_model=EventResponse)
+async def create_event(event: SimpleEventCreate, db: AsyncSession = Depends(get_db_session)):
+    # Soportamos el payload reducido que viene de Postman: {"id", "title", "tickets_left"}
+    # Derivamos `total_tickets` igual a `tickets_left` y usamos la fecha actual si no se proporciona.
+    new_event = Event(
+        title=event.title,
+        date=datetime.utcnow(),
+        total_tickets=event.tickets_left,
+        tickets_left=event.tickets_left,
+    )
+
+    try:
+        db.add(new_event)
+        await db.commit()
+        await db.refresh(new_event)
+        return {
+            "id": new_event.id,
+            "title": new_event.title,
+            "date": new_event.date,
+            "total_tickets": new_event.total_tickets,
+            "tickets_left": new_event.tickets_left,
+        }
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error interno al crear el evento: {str(e)}",
+        )
+
+
+# GET /events/{event_id} - Obtener evento específico
+@app.get("/api/v1/events/{event_id}", response_model=EventResponse)
+async def get_event(event_id: int, db: AsyncSession = Depends(get_db_session)):
+    result = await db.execute(select(Event).filter(Event.id == event_id))
+    event = result.scalars().first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Evento no encontrado.")
+    return event
+
+
+# PUT /events/{event_id} - Actualizar evento
+@app.put("/api/v1/events/{event_id}", response_model=EventResponse)
+async def update_event(
+    event_id: int, event_update: EventUpdate, db: AsyncSession = Depends(get_db_session)
+):
+    result = await db.execute(select(Event).filter(Event.id == event_id))
+    event = result.scalars().first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Evento no encontrado.")
+
+    if event_update.title is not None:
+        event.title = event_update.title
+    if event_update.date is not None:
+        event.date = event_update.date
+    if event_update.total_tickets is not None:
+        event.total_tickets = event_update.total_tickets
+    if event_update.tickets_left is not None:
+        event.tickets_left = event_update.tickets_left
+
+    await db.commit()
+    await db.refresh(event)
+
+    # Invalidar caché
+    redis = await get_redis()
+    await redis.delete("events:list:*")
+
+    return event
+
+
+# DELETE /events/{event_id} - Eliminar evento
+@app.delete("/api/v1/events/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_event(event_id: int, db: AsyncSession = Depends(get_db_session)):
+    result = await db.execute(select(Event).filter(Event.id == event_id))
+    event = result.scalars().first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Evento no encontrado.")
+
+    await db.delete(event)
+    await db.commit()
+
+    # Invalidar caché
+    redis = await get_redis()
+    await redis.delete("events:list:*")
+
+    return None
+
+
+# GET /bookings - Listar todas las reservas/tickets
+@app.get("/api/v1/bookings", response_model=list)
+async def list_bookings(
+    status_filter: str = None, db: AsyncSession = Depends(get_db_session)
+):
+    query = select(Ticket)
+    if status_filter:
+        query = query.filter(Ticket.status == status_filter)
+    
+    result = await db.execute(query)
+    tickets = result.scalars().all()
+
+    return [
+        {
+            "id": t.id,
+            "event_id": t.event_id,
+            "user_id": t.user_id,
+            "status": t.status,
+            "created_at": t.created_at,
+        }
+        for t in tickets
+    ]
+
+
+# GET /bookings/{booking_id} - Obtener reserva específica
+@app.get("/api/v1/bookings/{booking_id}", response_model=TicketResponse)
+async def get_booking(booking_id: int, db: AsyncSession = Depends(get_db_session)):
+    result = await db.execute(select(Ticket).filter(Ticket.id == booking_id))
+    ticket = result.scalars().first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada.")
+    return ticket
+
+
+# PUT /bookings/{booking_id} - Actualizar estado de la reserva
+@app.put("/api/v1/bookings/{booking_id}", response_model=TicketResponse)
+async def update_booking(
+    booking_id: int, ticket_update: TicketUpdate, db: AsyncSession = Depends(get_db_session)
+):
+    result = await db.execute(select(Ticket).filter(Ticket.id == booking_id))
+    ticket = result.scalars().first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada.")
+
+    if ticket_update.status:
+        valid_statuses = ["reserved", "confirmed", "cancelled"]
+        if ticket_update.status not in valid_statuses:
+            raise HTTPException(
+                status_code=400, detail=f"Estado válido: {', '.join(valid_statuses)}"
+            )
+        ticket.status = ticket_update.status
+
+    await db.commit()
+    await db.refresh(ticket)
+    return ticket
+
+
+# DELETE /bookings/{booking_id} - Cancelar reserva
+@app.delete("/api/v1/bookings/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_booking(booking_id: int, db: AsyncSession = Depends(get_db_session)):
+    result = await db.execute(select(Ticket).filter(Ticket.id == booking_id))
+    ticket = result.scalars().first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada.")
+
+    # Si se cancela una reserva, devolver tickets al evento
+    event_result = await db.execute(select(Event).filter(Event.id == ticket.event_id))
+    event = event_result.scalars().first()
+    if event:
+        event.tickets_left += 1
+
+    await db.delete(ticket)
+    await db.commit()
+
+    return None

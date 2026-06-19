@@ -4,29 +4,43 @@ from typing import Optional
 from jose import jwt
 from passlib.context import CryptContext
 from app.config import settings
+import bcrypt
+
+# IMPLEMENTACIÓN REESCRITA CON BCRYPT NATIVO (SIN PASSLIB)
+
+# Contexto criptográfico estándar de Passlib
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def get_password_hash(password: str) -> str:
     """
-    Aplica un pre-hash SHA-256 a la contraseña antes de pasarla a Bcrypt.
-    Esto resuelve de raíz el bug de passlib con las versiones nuevas de bcrypt,
-    y garantiza que las contraseñas largas nunca rompan el límite de 72 bytes.
+    Genera un hash seguro utilizando la librería nativa bcrypt.
+    Para evitar el límite de 72 bytes por diseño de bcrypt, primero aplicamos SHA-256.
     """
-    # 1. Convertimos la contraseña en un hash SHA-256 de longitud fija (32 bytes / 64 caracteres hexadecimales)
+    # Pre-hash a SHA-256 para normalizar a una longitud fija de 32 bytes
     pre_hashed = hashlib.sha256(password.encode("utf-8")).hexdigest()
 
-    # 2. Le aplicamos el Bcrypt con sal (Salt) para máxima seguridad de almacenamiento
-    return pwd_context.hash(pre_hashed)
+    # Generar el Salt y aplicar Bcrypt
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(pre_hashed.encode("utf-8"), salt)
+
+    # Decodificamos a string para poder almacenarlo
+    return hashed.decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
-    Verifica la contraseña aplicando el mismo pre-hash SHA-256.
+    Verifica de forma segura si la contraseña coincide usando bcrypt nativo.
     """
-    pre_hashed = hashlib.sha256(plain_password.encode("utf-8")).hexdigest()
-    return pwd_context.verify(pre_hashed, hashed_password)
+    try:
+        pre_hashed = hashlib.sha256(plain_password.encode("utf-8")).hexdigest()
+        # Contrasta los bytes de la contraseña ingresada contra los bytes almacenados
+        return bcrypt.checkpw(
+            pre_hashed.encode("utf-8"), hashed_password.encode("utf-8")
+        )
+    except Exception:
+        return False
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
