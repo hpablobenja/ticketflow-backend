@@ -22,7 +22,9 @@ async def startup():
         # Autogeneración segura de la tabla de usuarios si no existe
         await conn.run_sync(Base.metadata.create_all)
 
+
 # 6. ENDPOINTS CORREGIDOS Y SEGUROS
+
 
 @app.post("/api/v1/auth/register", status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
@@ -45,7 +47,7 @@ async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
     new_user = User(
         email=user_data.email,
         hashed_password=secure_hash,
-        role=db_role, 
+        role=db_role,
     )
     db.add(new_user)
     await db.commit()
@@ -69,7 +71,9 @@ async def login_for_access_token(
         )
 
     # Generar el Token JWT firmado
-    access_token_expires = datetime.timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = datetime.timedelta(
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
     expire = datetime.datetime.utcnow() + access_token_expires
 
     token_data = {
@@ -79,9 +83,16 @@ async def login_for_access_token(
         "exp": expire,
     }
 
-    encoded_jwt = jwt.encode(token_data, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    encoded_jwt = jwt.encode(
+        token_data, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+    )
 
-    return {"access_token": encoded_jwt, "token_type": "bearer", "user_id": user.id, "role": user.role.value}
+    return {
+        "access_token": encoded_jwt,
+        "token_type": "bearer",
+        "user_id": user.id,
+        "role": user.role.value,
+    }
 
 
 @app.get("/api/v1/users", response_model=List[UserResponse])
@@ -101,7 +112,9 @@ async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
 
 
 @app.put("/api/v1/users/{user_id}", response_model=UserResponse)
-async def update_user(user_id: int, user_update: UserUpdate, db: AsyncSession = Depends(get_db)):
+async def update_user(
+    user_id: int, user_update: UserUpdate, db: AsyncSession = Depends(get_db)
+):
     result = await db.execute(select(User).filter(User.id == user_id))
     user = result.scalars().first()
     if not user:

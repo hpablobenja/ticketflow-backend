@@ -15,16 +15,26 @@ try:
     res = requests.get(f"{BOOKING_SERVICE_URL}/bookings", headers=headers)
     if res.status_code == 200:
         reservas = res.json()
-        if not reservas: tf.info("No existen reservaciones activas en el clúster.")
-        
+        if not reservas:
+            tf.info("No existen reservaciones activas en el clúster.")
+
         for r in reservas:
             with tf.container(border=True):
-                tf.write(f"🎫 **Reserva ID:** `{r.get('id')}` | Asiento del Evento: `{r.get('event_id')}`")
-                tf.write(f"👤 Reservado por User ID: `{r.get('user_id')}` | Estado: **{r.get('status').upper()}**")
-                
+                tf.write(
+                    f"🎫 **Reserva ID:** `{r.get('id')}` | Asiento del Evento: `{r.get('event_id')}`"
+                )
+                tf.write(
+                    f"👤 Reservado por User ID: `{r.get('user_id')}` | Estado: **{r.get('status').upper()}**"
+                )
+
                 # UPDATE/DELETE: Liberar o forzar expiración del bloqueo en Redis
-                if tf.button("🔓 Forzar Liberación de Asiento", key=f"cancel_{r.get('id')}"):
-                    c_res = requests.delete(f"{BOOKING_SERVICE_URL}/reservations/{r.get('id')}", headers=headers)
+                if tf.button(
+                    "🔓 Forzar Liberación de Asiento", key=f"cancel_{r.get('id')}"
+                ):
+                    c_res = requests.delete(
+                        f"{BOOKING_SERVICE_URL}/reservations/{r.get('id')}",
+                        headers=headers,
+                    )
                     if c_res.status_code == 200:
                         tf.success("Bloqueo removido.")
                         tf.rerun()

@@ -199,8 +199,13 @@ async def checkout_ticket(ticket_id: int, db: AsyncSession = Depends(get_db)):
         "ticket_id": ticket.id,
     }
 
-@app.post("/api/v1/events", status_code=status.HTTP_201_CREATED, response_model=EventResponse)
-async def create_event(event: SimpleEventCreate, db: AsyncSession = Depends(get_db_session)):
+
+@app.post(
+    "/api/v1/events", status_code=status.HTTP_201_CREATED, response_model=EventResponse
+)
+async def create_event(
+    event: SimpleEventCreate, db: AsyncSession = Depends(get_db_session)
+):
     # Soportamos el payload reducido que viene de Postman: {"id", "title", "tickets_left"}
     # Derivamos `total_tickets` igual a `tickets_left` y usamos la fecha actual si no se proporciona.
     new_event = Event(
@@ -294,7 +299,7 @@ async def list_bookings(
     query = select(Ticket)
     if status_filter:
         query = query.filter(Ticket.status == status_filter)
-    
+
     result = await db.execute(query)
     tickets = result.scalars().all()
 
@@ -323,7 +328,9 @@ async def get_booking(booking_id: int, db: AsyncSession = Depends(get_db_session
 # PUT /bookings/{booking_id} - Actualizar estado de la reserva
 @app.put("/api/v1/bookings/{booking_id}", response_model=TicketResponse)
 async def update_booking(
-    booking_id: int, ticket_update: TicketUpdate, db: AsyncSession = Depends(get_db_session)
+    booking_id: int,
+    ticket_update: TicketUpdate,
+    db: AsyncSession = Depends(get_db_session),
 ):
     result = await db.execute(select(Ticket).filter(Ticket.id == booking_id))
     ticket = result.scalars().first()

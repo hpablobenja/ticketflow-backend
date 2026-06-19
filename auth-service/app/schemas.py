@@ -4,6 +4,7 @@ from app.models import UserRole
 
 # ESQUEMAS DE VALIDACIÓN (Pydantic v2)
 
+
 class UserRegister(BaseModel):
     email: EmailStr
     password: str

@@ -8,8 +8,10 @@ from sqlalchemy import Enum as SQLEnum  # El tipo Enum de SQLAlchemy
 
 # MODELOS DE BASE DE DATOS (SQLAlchemy)
 
+
 class Base(DeclarativeBase):
     pass
+
 
 # Declaramos las opciones
 class UserRole(str, enum.Enum):
