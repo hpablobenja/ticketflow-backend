@@ -59,7 +59,7 @@ Asegúrate de tener instalados **Docker** y **Docker Compose** en tu máquina de
 
 1. Clona este repositorio:
 ```bash
-git clone (https://github.com/hpablobenja/ticketflow-backend.git)
+git clone https://github.com/hpablobenja/ticketflow-backend.git
 cd ticketflow-backend
 
 ```

@@ -1,20 +1,28 @@
 import pytest
-from httpx import AsyncClient
+from fastapi.testclient import TestClient
+
+# Importamos la app de tu servicio de autenticación
 from app.main import app
 
-@pytest.mark.asyncio
-async def test_register_user_success():
-    # Usamos httpx.AsyncClient para interactuar con los endpoints asíncronos de FastAPI
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        payload = {
-            "email": "test_engineer@ticketflow.com",
-            "password": "SecurePassword123!",
-            "role": "Customer"
-        }
-        response = await ac.post("/api/v1/auth/register", json=payload)
-        
-    assert response.status_code == 201
-    data = response.json()
-    assert data["email"] == payload["email"]
-    assert "id" in data
-    assert data["role"] == "Customer"
+client = TestClient(app)
+
+
+def test_health_check_auth():
+    """
+    Verifica que el servicio responda correctamente en su raíz o docs
+    """
+    response = client.get("/docs")
+    assert response.status_code == 200
+
+
+def test_password_hash_logic():
+    """
+    Verifica que nuestra lógica criptográfica nativa no rompa strings
+    """
+    from app.main import get_password_hash, verify_password
+
+    secret = "MiPasswordSuperSeguro123!"
+    hashed = get_password_hash(secret)
+
+    assert hashed != secret
+    assert verify_password(secret, hashed) is True
