@@ -1,0 +1,10 @@
+We need to create a file .env with the following:
+
+# Configuración de Base de Datos (AWS RDS Postgres)
+#DB_HOST=tu-endpoint-de-rds-aqui.amazonaws.com
+DB_HOST=ticketflowinfrastack-postgresinstance19cdd68a-kmlf1bxw5k76.ci3886gg6qiy.us-east-1.rds.amazonaws.com
+DB_PORT=5432
+DB_NAME=ticketflow_db
+DB_USER=postgres
+DB_PASSWORD=H,qZNHXwC_mYstbsgxiqt5KjA0E^BQ
+#DB_PASSWORD=ticket_password
